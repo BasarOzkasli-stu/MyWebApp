@@ -12,15 +12,13 @@ import basarozkasli.domain.Book;
 import java.util.List;
 
 public interface BookRepository {
-    Book findById(int bookId);
+    Book findById(int bookId, int userId);
     List<Book> findByUserId(int userId);
-    List<Book> findAll();
-    boolean addBook(Book book);
-    boolean updateBook(Book book);
-    boolean deleteBook(int bookId);
-
-    // Ekstra fonksiyonlar: 
-    List<Book> findFavoriteBooks(int userId);    
-    List<Book> findUnreadBooks(int userId);      
-    List<Book> findWishlistBooksReleasedWithinAWeek(int userId);
+    List<Book> findFavoriteBooks(int userId);
+    List<Book> findUnreadBooks(int userId);
+    List<Book> findWishlistBooks(int userId);
+    List<Book> findBooksReleasingSoon(int userId);
+    boolean save(Book book);
+    boolean update(Book book);
+    boolean delete(int bookId, int userId);
 }

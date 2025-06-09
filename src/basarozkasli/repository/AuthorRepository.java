@@ -13,9 +13,10 @@ import java.util.List;
 
 public interface AuthorRepository {
     Author findById(int authorId);
+    List<Author> findByName(String name);
+    List<Author> findFavoriteAuthors(int userId);
     Author findByNameAndSurname(String name, String surname);
-    List<Author> findAll();
-    boolean addAuthor(Author author);
-    boolean updateAuthor(Author author);
-    boolean deleteAuthor(int authorId);
+    boolean save(Author author);
+    boolean delete(int authorId);
+    boolean hasBooks(int authorId, int userId);
 }

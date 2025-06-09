@@ -9,7 +9,19 @@ package basarozkasli.domain;
  * @author basar
  */
 public enum UserType {
-    ADMIN,      
-    REGULAR     
-    
+    ADMIN(1),    // Type-1: tüm yetkiler
+    REGULAR(2);  // Type-2: sınırlı yetki
+    private final int value;
+    UserType(int value) {
+        this.value = value;
+    }
+    public int getValue() {
+        return value;
+    }
+    public static UserType fromValue(int value) {
+        for (UserType ut : UserType.values()) {
+            if (ut.value == value) return ut;
+        }
+        throw new IllegalArgumentException("Geçersiz UserType: " + value);
+    }
 }

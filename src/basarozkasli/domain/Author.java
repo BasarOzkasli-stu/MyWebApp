@@ -35,4 +35,11 @@ public class Author {
 
     public String getWebsite() { return website; }
     public void setWebsite(String website) { this.website = website; }
+    
+    public String getFullName() {
+        return name + " " + surname;
+    }
+    public void generateWebsite() {
+    this.website = "website-" + authorId;
+    }
 }

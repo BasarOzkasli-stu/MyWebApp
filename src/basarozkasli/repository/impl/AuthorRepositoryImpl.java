@@ -8,11 +8,9 @@ package basarozkasli.repository.impl;
  *
  * @author basar
  */
-
-
 import basarozkasli.domain.Author;
 import basarozkasli.repository.AuthorRepository;
-import basarozkasli.infrastructure.ConnectionManager;
+import basarozkasli.infrastructure.MySQLConnectionManager;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -23,150 +21,140 @@ public class AuthorRepositoryImpl implements AuthorRepository {
     @Override
     public Author findById(int authorId) {
         Author author = null;
-        try {
-            Connection conn = ConnectionManager.getConnection();
-            String sql = "SELECT * FROM authors WHERE authorId = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
+        try (Connection conn = MySQLConnectionManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM authors WHERE authorId = ?")) {
             ps.setInt(1, authorId);
-
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                int id = rs.getInt("authorId");
-                String name = rs.getString("name");
-                String surname = rs.getString("surname");
-                String website = rs.getString("website");
-
-                author = new Author(id, name, surname, website);
+                author = new Author(
+                        rs.getInt("authorId"),
+                        rs.getString("name"),
+                        rs.getString("surname"),
+                        rs.getString("website")
+                );
             }
-            rs.close();
-            ps.close();
-            conn.close();
         } catch (SQLException e) {
-            e.printStackTrace();
         }
         return author;
     }
 
     @Override
-    public Author findByNameAndSurname(String name, String surname) {
-        Author author = null;
-        try {
-            Connection conn = ConnectionManager.getConnection();
-            String sql = "SELECT * FROM authors WHERE name = ? AND surname = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, name);
-            ps.setString(2, surname);
-
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                int id = rs.getInt("authorId");
-                String authorName = rs.getString("name");
-                String authorSurname = rs.getString("surname");
-                String website = rs.getString("website");
-
-                author = new Author(id, authorName, authorSurname, website);
-            }
-            rs.close();
-            ps.close();
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return author;
-    }
-
-    @Override
-    public List<Author> findAll() {
+    public List<Author> findByName(String name) {
         List<Author> authors = new ArrayList<>();
-        try {
-            Connection conn = ConnectionManager.getConnection();
-            String sql = "SELECT * FROM authors";
-            Statement st = conn.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-
+        try (Connection conn = MySQLConnectionManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM authors WHERE name = ?")) {
+            ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                int id = rs.getInt("authorId");
-                String name = rs.getString("name");
-                String surname = rs.getString("surname");
-                String website = rs.getString("website");
-
-                Author author = new Author(id, name, surname, website);
-                authors.add(author);
+                authors.add(new Author(
+                        rs.getInt("authorId"),
+                        rs.getString("name"),
+                        rs.getString("surname"),
+                        rs.getString("website")
+                ));
             }
-            rs.close();
-            st.close();
-            conn.close();
         } catch (SQLException e) {
-            e.printStackTrace();
         }
         return authors;
     }
 
     @Override
-    public boolean addAuthor(Author author) {
-        boolean added = false;
-        try {
-            Connection conn = ConnectionManager.getConnection();
-            String sql = "INSERT INTO authors (name, surname, website) VALUES (?, ?, ?)";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, author.getName());
-            ps.setString(2, author.getSurname());
-            ps.setString(3, author.getWebsite());
-
-            int result = ps.executeUpdate();
-            if (result > 0) {
-                added = true;
+    public Author findByNameAndSurname(String name, String surname) {
+        Author author = null;
+        try (Connection conn = MySQLConnectionManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM authors WHERE name = ? AND surname = ?")) {
+            ps.setString(1, name);
+            ps.setString(2, surname);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                author = new Author(
+                        rs.getInt("authorId"),
+                        rs.getString("name"),
+                        rs.getString("surname"),
+                        rs.getString("website")
+                );
             }
-            ps.close();
-            conn.close();
         } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return added;
+        return author;
     }
 
     @Override
-    public boolean updateAuthor(Author author) {
-        boolean updated = false;
-        try {
-            Connection conn = ConnectionManager.getConnection();
-            String sql = "UPDATE authors SET name = ?, surname = ?, website = ? WHERE authorId = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, author.getName());
-            ps.setString(2, author.getSurname());
-            ps.setString(3, author.getWebsite());
-            ps.setInt(4, author.getAuthorId());
-
-            int result = ps.executeUpdate();
-            if (result > 0) {
-                updated = true;
+    public List<Author> findFavoriteAuthors(int userId) {
+        List<Author> authors = new ArrayList<>();
+        String sql =
+                "SELECT a.authorId, a.name, a.surname, a.website " +
+                "FROM authors a " +
+                "JOIN books b ON a.authorId = b.authorId " +
+                "WHERE b.userId = ? " +
+                "GROUP BY a.authorId, a.name, a.surname, a.website " +
+                "HAVING COUNT(b.bookId) >= 3";
+        try (Connection conn = MySQLConnectionManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                authors.add(new Author(
+                        rs.getInt("authorId"),
+                        rs.getString("name"),
+                        rs.getString("surname"),
+                        rs.getString("website")
+                ));
             }
-            ps.close();
-            conn.close();
         } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return updated;
+        return authors;
     }
 
     @Override
-    public boolean deleteAuthor(int authorId) {
-        boolean deleted = false;
-        try {
-            Connection conn = ConnectionManager.getConnection();
-            String sql = "DELETE FROM authors WHERE authorId = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
+    public boolean save(Author author) {
+        String sql = "INSERT INTO authors (name, surname, website) VALUES (?, ?, ?)";
+        try (Connection conn = MySQLConnectionManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, author.getName());
+            ps.setString(2, author.getSurname());
+            ps.setString(3, author.getWebsite());
+            int result = ps.executeUpdate();
+            if (result > 0) {
+                ResultSet generatedKeys = ps.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    author.setAuthorId(generatedKeys.getInt(1));
+                }
+                return true;
+            }
+        } catch (SQLException e) {
+        }
+        return false;
+    }
+
+    @Override
+    public boolean delete(int authorId) {
+        String sql = "DELETE FROM authors WHERE authorId = ?";
+        try (Connection conn = MySQLConnectionManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, authorId);
-
             int result = ps.executeUpdate();
-            if (result > 0) {
-                deleted = true;
-            }
-            ps.close();
-            conn.close();
+            return result > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+           
         }
-        return deleted;
+        return false;
+    }
+
+    @Override
+    public boolean hasBooks(int authorId, int userId) {
+        String sql = "SELECT COUNT(*) AS count FROM books WHERE authorId = ? AND userId = ?";
+        try (Connection conn = MySQLConnectionManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, authorId);
+            ps.setInt(2, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0;
+            }
+        } catch (SQLException e) {
+          
+        }
+        return false;
     }
 }

@@ -8,26 +8,42 @@ package basarozkasli.infrastructure;
  *
  * @author basar
  */
-
+import javax.swing.JOptionPane;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class MySQLConnectionManager implements ConnectionManager {
-    private String url;
-    private String user;
-    private String password;
+public class MySQLConnectionManager implements IConnectionManager {
+    private static MySQLConnectionManager instance;
+    private final IConfiguration config;
+    private boolean connectionMessageShown = false;
 
-    public MySQLConnectionManager(String url, String user, String password) {
-        this.url = url;
-        this.user = user;
-        this.password = password;
+    private MySQLConnectionManager() {
+        config = AppConfiguration.getInstance();
+    }
+
+    public static MySQLConnectionManager getInstance() {
+        if (instance == null) {
+            instance = new MySQLConnectionManager();
+        }
+        return instance;
     }
 
     @Override
     public Connection getConnection() throws SQLException {
-        // JDBC bağlantısı oluşturur
-        return DriverManager.getConnection(url, user, password);
+    String url = config.getDatabaseUrl();
+    String user = config.getDatabaseUsername();
+    String password = config.getDatabasePassword();
+    Connection conn = DriverManager.getConnection(url, user, password);
+
+    // --- EKLEDİĞİMİZ KISIM ---
+    if (!connectionMessageShown) {
+        JOptionPane.showMessageDialog(null, "Veritabanına başarıyla bağlanıldı!");
+        connectionMessageShown = true;
+    }
+    // --------------------------
+
+    return conn;
     }
 
     @Override

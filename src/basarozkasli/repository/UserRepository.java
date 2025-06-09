@@ -9,13 +9,9 @@ package basarozkasli.repository;
  * @author basar
  */
 import basarozkasli.domain.User;
-import java.util.List;
-
 public interface UserRepository {
-    User findById(int userId);
+    User findById(int id);
     User findByUsername(String username);
-    List<User> findAll();
-    boolean addUser(User user);
-    boolean updateUser(User user);
-    boolean deleteUser(int userId);
+    User authenticate(String username, String password);
+    boolean save(User user);
 }
