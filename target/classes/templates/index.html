@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Basit Hesap Makinesi</title>
+    <style>
+        :root { --bg:#0f172a; --card:#111827; --accent:#22c55e; --muted:#9ca3af; --text:#e5e7eb; }
+        html,body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+        .container { max-width: 760px; margin: 40px auto; padding: 0 16px; }
+        .card { background:linear-gradient(180deg, #0b1220, #0b122099), var(--card); border:1px solid #1f2937; border-radius:14px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.35); }
+        h1 { margin:0 0 12px; font-weight:700; letter-spacing:.2px; }
+        p.sub { margin:0 0 24px; color:var(--muted); }
+        .row { display:flex; gap:12px; flex-wrap:wrap; }
+        input[type="number"], select, button { height:44px; border-radius:10px; border:1px solid #334155; background:#0b1220; color:var(--text); padding:0 12px; font-size:16px; }
+        input[type="number"] { width: 160px; }
+        select { width: 160px; }
+        button { background:linear-gradient(180deg, #16a34a, #16a34acc); border:none; padding:0 16px; cursor:pointer; font-weight:600; }
+        button:hover { filter: brightness(1.05); }
+        .result { margin-top:18px; font-size:18px; font-weight:600; }
+        .error { color:#f87171; font-weight:600; }
+        .links { margin-top:18px; color:var(--muted); }
+        .links a { color:#60a5fa; text-decoration:none; }
+        .links a:hover { text-decoration:underline; }
+        .footer { margin-top:26px; font-size:12px; color:var(--muted); }
+        /* Glasscard styles */
+        .glass-wrap { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; }
+        .glasscard { pointer-events: auto; min-width: 260px; max-width: 520px; text-align: center; padding: 18px 22px; border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .glasscard h2 { margin: 0; font-weight: 700; letter-spacing: .2px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>${title}</h1>
+        <p class="sub">Aşağıdan iki sayı ve işlem seçerek REST API üzerinden sonucu hesaplayabilirsiniz.</p>
+        <div class="row">
+            <input id="a" type="number" step="any" placeholder="a" />
+            <input id="b" type="number" step="any" placeholder="b" />
+            <select id="op">
+                <option value="add">Topla</option>
+                <option value="subtract">Çıkart</option>
+                <option value="multiply">Çarp</option>
+                <option value="divide">Böl</option>
+            </select>
+            <button id="calcBtn">Hesapla</button>
+        </div>
+        <div id="msg" class="result"></div>
+        <div class="links">
+            Swagger/OpenAPI dokümanı için: <a href="/swagger-ui/index.html" target="_blank" rel="noreferrer">/swagger-ui/index.html</a>
+        </div>
+        <div class="footer">Not: Bölme işleminde b = 0 ise hata döner (HTTP 400).</div>
+    </div>
+</div>
+<div class="glass-wrap" aria-hidden="true">
+    <div class="glasscard">
+        <h2>Hello World</h2>
+        <div style="margin-top:8px; font-size:13px; color:#cbd5e1;">Bu kart Issue #1 isteğine göre eklendi.</div>
+    </div>
+</div>
+<script>
+    const $ = (s) => document.querySelector(s);
+    const fmt = (x) => Number.isFinite(x) ? (Math.round(x*1e12)/1e12).toString() : x;
+    $('#calcBtn').addEventListener('click', async () => {
+        const a = $('#a').value;
+        const b = $('#b').value;
+        const op = $('#op').value;
+        const url = `/api/calc/${op}?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`;
+        const el = $('#msg');
+        el.textContent = 'Hesaplanıyor...';
+        el.className = 'result';
+        try {
+            const res = await fetch(url);
+            const text = await res.text();
+            if (!res.ok) {
+                el.textContent = `Hata (${res.status}): ${text}`;
+                el.className = 'result error';
+                return;
+            }
+            const num = Number(text);
+            el.textContent = `Sonuç: ${fmt(num)}`;
+        } catch (e) {
+            el.textContent = 'İstek gönderilirken bir hata oluştu';
+            el.className = 'result error';
+        }
+    });
+</script>
+</body>
+</html>
